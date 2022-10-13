@@ -1,0 +1,5 @@
+cpu
+io
+io
+io
+io
