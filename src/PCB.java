@@ -10,6 +10,23 @@ public class PCB {
 //    一个页表基址指针/进程 放在 PCB 中
     private int pageTableBase;
 
+    private int[] pgTable;
+
+    public int getPageTableBase() {
+        return pageTableBase;
+    }
+
+    public void setPageTableBase(int pageTableBase) {
+        this.pageTableBase = pageTableBase;
+    }
+
+    public int[] getPgTable() {
+        return pgTable;
+    }
+
+    public void setPgTable(int[] pgTable) {
+        this.pgTable = pgTable;
+    }
 
     private int pWaitTime; // 等待时间
 

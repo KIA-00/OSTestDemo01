@@ -1,7 +1,5 @@
-cpu
-io
-cpu
-io
-io
-cpu
-io
+3 4 6 12
+io 43f7
+io 9958
+io 6cac
+io 6dfd

@@ -1,5 +1,4 @@
-cpu
-io
-io
-io
-io
+6 0 2 5 7 9 13
+io ae6
+cpu 252b
+cpu 27a9

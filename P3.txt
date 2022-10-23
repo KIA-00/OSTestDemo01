@@ -1,6 +1,4 @@
-cpu
-io
-io
-cpu
-io
-io
+6 3 5 8 11 12 15
+cpu bd76
+cpu 5dfb
+io 8f35

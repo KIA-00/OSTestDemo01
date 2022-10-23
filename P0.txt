@@ -1,5 +1,5 @@
-cpu
-cpu
-cpu
-io
-io
+5 0 4 5 10 15
+cpu f34f
+io f59e
+io 556a
+io f79f

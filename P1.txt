@@ -1,6 +1,5 @@
-io
-cpu
-io
-io
-io
-io
+5 0 5 8 11 15
+io 54d9
+io 58aa
+cpu 90a3
+io fbde
