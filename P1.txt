@@ -1,5 +1,5 @@
-5 0 5 8 11 15
-io 54d9
-io 58aa
-cpu 90a3
-io fbde
+3 0 11 13
+io dac4
+cpu d06
+io b90d
+cpu b0cb

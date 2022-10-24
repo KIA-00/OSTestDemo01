@@ -59,6 +59,11 @@ public class processControl {
 
     public static final double P_AVAILABLEPG = 0.85;
 
+    //虚拟地址
+    public static String virtual;
+    //物理地址
+    public static String physical;
+
 
     public static void main(String[] args) throws Exception {
         //程序文件个数
@@ -243,7 +248,7 @@ public class processControl {
 
         System.out.print("time\t\t");
         for (int i = 0; i < k; i++) {
-            System.out.print("PID:" + i + "\t\t");
+            System.out.print("PID:" + i + "\t\t\t");
         }
         System.out.println("CPU\t\tIOs");
         boolean unDone = true;
@@ -267,6 +272,9 @@ public class processControl {
         }
         printTable(k, pcbs);
 
+        //输出位视图
+        System.out.println("位示图：" + Arrays.toString(bitmap));
+
         DecimalFormat df2 = new DecimalFormat("0.00");
         System.err.println("所有进程执行完毕");
         System.err.println("程序运行" + time + "个时间片");
@@ -283,18 +291,18 @@ public class processControl {
         for (int j = 0; j < k; j++) {
             int state = pcbs[j].getpState();
             if (state == READY) {
-                System.out.print("READY\t\t");
+                System.out.print("READY\t\t\t");
             } else if (state == RUNCPU) {
-                System.out.print("RUN:CPU\t\t");
+                System.out.print("RUN:CPU"+virtual+" "+physical);
                 cpuTime++;
                 cs++;
             } else if (state == RUNIO) {
-                System.out.print("RUN:IO\t\t");
+                System.out.print("RUN:IO "+virtual+" "+physical+"\t");
                 cpuTime++;
                 pcbs[j].setpState(WAITING);
                 cs++;
             } else if (state == WAITING) {
-                System.out.print("WAITING\t\t");
+                System.out.print("WAITING\t\t\t");
                 pcbs[j].setpWaitTime(pcbs[j].getpWaitTime() - 1);
                 if (pcbs[j].getpWaitTime() == 0) {
                     PCBS3.remove(0);
@@ -312,7 +320,7 @@ public class processControl {
                 ioTimeAdd = true;
                 ios++;
             } else {
-                System.out.print("DONE\t\t");
+                System.out.print("DONE\t\t\t");
             }
         }
         System.out.println(cs + "\t\t" + ios);
@@ -338,20 +346,39 @@ public class processControl {
 //                    检查访问地址是否合法，如果不合法，则终止进程的执行，将其加入完成队列
                     //计算有效位
                     int value = new BigInteger(lines[1], 16).intValue();
-                    value/=Math.pow(2,PAGE_OFFSET);
+                    int value2= (int) (value/Math.pow(2,PAGE_OFFSET));
                     //判断value是否存在significantBit中
                     boolean isExist = false;
                     for (int j = 1; j < significantBit.length; j++) {
-                        if (value == Integer.parseInt(significantBit[j])) {
+                        if (value2 == Integer.parseInt(significantBit[j])) {
                             isExist = true;
                             break;
                         }
                     }
+//                    1) 检查访问地址是否合法，如果不合法，则终止进程的执行，将其加入完成队列
+//                    2) 否则输出地址转换：将 run:cpu/io 改成（run:cpu/io, 16 进制的虚拟地址，16 进制的物理地址）
                     if (!isExist) {
                         PCBS2.remove(0);
                         pcb.setpState(DONE);
                         PCBS4.add(pcb);
                         break;
+                    }else{
+                        //虚拟地址
+                        virtual=lines[1];
+                        //遍历位数组，找到对应的物理地址，将0置为1，返回位置下表，即为物理地址
+                        for (int j = 0; j < bitmap.length; j++) {
+                            if (bitmap[j]==0){
+                                bitmap[j]=1;
+                                pageTable[pcb.getPid()][0]=j;
+                                if (value2==0){
+                                    physical= Integer.toHexString(value%((int)Math.pow(2,PAGE_OFFSET))+j*(int)Math.pow(2,PAGE_OFFSET));
+                                }else
+                                    physical= Integer.toHexString(value%(value2*(int)Math.pow(2,PAGE_OFFSET))+j*(int)Math.pow(2,PAGE_OFFSET));
+                                break;
+                            }
+
+                        }
+
                     }
 
                     //执行指令
