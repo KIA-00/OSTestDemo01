@@ -1,5 +1,4 @@
-5 5 8 10 11 15
-cpu 842d
-io 45c4
-io b4dc
-io bae1
+6 0 2 3 11 14 15
+io 3ff2
+io 3934
+cpu b367

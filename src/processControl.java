@@ -30,13 +30,17 @@ public class processControl {
     public static int ioTime = 0;
 
 
-    /*    一个全局的位示图 bitmap（位数组），用于物理页帧的分配和回收。第 i
-        位为 0 表示第 i 个物理页帧空闲，为 1 则表示页帧被占用*/
+    /**
+     * 一个全局的位示图 bitmap（位数组），用于物理页帧的分配和回收。第 i
+     *         位为 0 表示第 i 个物理页帧空闲，为 1 则表示页帧被占用
+     */
     public static int[] bitmap = new int[32];
 
-    /*一个页表/进程，用于支持每个进程的地址转换。页表项一定包括：物理
-    页帧号、有效位、存在位、(访问权限*)。关于页表项的表示，可以用结
-    构体，也可以用位数组*/
+    /**
+     * 一个页表/进程，用于支持每个进程的地址转换。页表项一定包括：物理
+     *     页帧号、有效位、存在位、(访问权限*)。关于页表项的表示，可以用结
+     *     构体，也可以用位数组
+     */
     public static int[][] pageTable = new int[32][4];
 
 
@@ -45,23 +49,36 @@ public class processControl {
       3) 物理地址的位数（例如：18 位）
       4) 进程的大小范围（例如：最小页数 min_size=3，最大页数 max_size=7）
       5) 生成一个合法虚拟地址（即不会导致处理机异常的虚拟地址）的概率 p_validAddr（例如：0.8）*/
-    //页内偏移
+    /**
+     * 页内偏移
+     */
     public static final int PAGE_OFFSET = 12;
-    //虚拟地址
+    /**
+     * 虚拟地址
+     */
     public static final int VIRTUAL_ADDRESS = 16;
     //物理地址
     public static final int PHYSICAL_ADDRESS = 18;
     //进程的大小范围
     public static final int MIN_SIZE = 3;
     public static final int MAX_SIZE = 7;
-    //生成一个合法虚拟地址的概率
+    /**
+     * 生成一个合法虚拟地址的概率
+     */
     public static final double P_VALIDADDR = 0.8;
 
+    /**
+     * 随机生成位数组，生成 0 的概率为 P_AVAILABLEPG
+     */
     public static final double P_AVAILABLEPG = 0.85;
 
-    //虚拟地址
+    /**
+     * 虚拟地址
+     */
     public static String virtual;
-    //物理地址
+    /**
+     * 物理地址
+     */
     public static String physical;
 
 
@@ -345,7 +362,13 @@ public class processControl {
 
 //                    检查访问地址是否合法，如果不合法，则终止进程的执行，将其加入完成队列
                     //计算有效位
+                    /**
+                     * 虚拟地址
+                     */
                     int value = new BigInteger(lines[1], 16).intValue();
+                    /**
+                     * 有效位
+                     */
                     int value2= (int) (value/Math.pow(2,PAGE_OFFSET));
                     //判断value是否存在significantBit中
                     boolean isExist = false;
@@ -365,18 +388,31 @@ public class processControl {
                     }else{
                         //虚拟地址
                         virtual=lines[1];
-                        //遍历位数组，找到对应的物理地址，将0置为1，返回位置下表，即为物理地址
-                        for (int j = 0; j < bitmap.length; j++) {
-                            if (bitmap[j]==0){
-                                bitmap[j]=1;
-                                pageTable[pcb.getPid()][0]=j;
-                                if (value2==0){
-                                    physical= Integer.toHexString(value%((int)Math.pow(2,PAGE_OFFSET))+j*(int)Math.pow(2,PAGE_OFFSET));
-                                }else
-                                    physical= Integer.toHexString(value%(value2*(int)Math.pow(2,PAGE_OFFSET))+j*(int)Math.pow(2,PAGE_OFFSET));
-                                break;
-                            }
 
+                        int[] ints = pcb.getpVirtAddr();
+                        //如果虚拟地址在内存中，直接访问
+                        if (ints[value2]!=-1){
+                            pageTable[pcb.getPid()][0]=ints[value2];
+                            if (value2==0){
+                                physical= Integer.toHexString(value%((int)Math.pow(2,PAGE_OFFSET))+ints[value2]*(int)Math.pow(2,PAGE_OFFSET));
+                            }else
+                                physical= Integer.toHexString(value%(value2*(int)Math.pow(2,PAGE_OFFSET))+ints[value2]*(int)Math.pow(2,PAGE_OFFSET));
+                        }
+                        else {
+                            //遍历位数组，找到对应的物理地址，将0置为1，返回位置下表，为物理页帧号
+                            for (int j = 0; j < bitmap.length; j++) {
+                                if (bitmap[j] == 0) {
+                                    bitmap[j] = 1;
+                                    ints[value2] = j;
+                                    pcb.setpVirtAddr(ints);
+                                    pageTable[pcb.getPid()][0] = j;
+                                    if (value2 == 0) {
+                                        physical = Integer.toHexString(value % ((int) Math.pow(2, PAGE_OFFSET)) + j * (int) Math.pow(2, PAGE_OFFSET));
+                                    } else
+                                        physical = Integer.toHexString(value % (value2 * (int) Math.pow(2, PAGE_OFFSET)) + j * (int) Math.pow(2, PAGE_OFFSET));
+                                    break;
+                                }
+                            }
                         }
 
                     }

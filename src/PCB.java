@@ -30,6 +30,24 @@ public class PCB {
 
     private int pWaitTime; // 等待时间
 
+    //虚拟地址对应的物理地址
+    private int[] pVirtAddr = new int[16];
+
+    public PCB() {
+        //将虚拟地址初始化为-1
+        for (int i = 0; i < pVirtAddr.length; i++) {
+            pVirtAddr[i] = -1;
+        }
+    }
+
+    public int[] getpVirtAddr() {
+        return pVirtAddr;
+    }
+
+    public void setpVirtAddr(int[] pVirtAddr) {
+        this.pVirtAddr = pVirtAddr;
+    }
+
     public int getPid() {
         return pid;
     }

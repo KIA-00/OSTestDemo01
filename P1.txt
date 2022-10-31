@@ -1,5 +1,5 @@
-3 0 11 13
-io dac4
-cpu d06
-io b90d
-cpu b0cb
+3 0 8 12
+io ca1e
+io 8a99
+cpu 846c
+cpu c4c8
