@@ -1,3 +1,6 @@
+import java.util.LinkedList;
+import java.util.List;
+
 /**
  * 进程控制块
  */
@@ -8,16 +11,60 @@ public class PCB {
     private int pPC; // 程序计数器，进程上下文
 
 //    一个页表基址指针/进程 放在 PCB 中
-    private int pageTableBase;
+    private List<Integer> PTBR = new LinkedList<>();
 
     private int[] pgTable;
 
-    public int getPageTableBase() {
-        return pageTableBase;
+    private int pAlloc;
+    private int pMaxAlloc;
+
+    /**
+     * 命中次数
+     */
+    public static int hit;
+    /**
+     * 执行次数
+     */
+    public static int execute;
+
+    public int getHit() {
+        return hit;
     }
 
-    public void setPageTableBase(int pageTableBase) {
-        this.pageTableBase = pageTableBase;
+    public void setHit(int hit) {
+        PCB.hit = hit;
+    }
+
+    public int getExecute() {
+        return execute;
+    }
+
+    public void setExecute(int execute) {
+        PCB.execute = execute;
+    }
+
+    public int getpAlloc() {
+        return pAlloc;
+    }
+
+    public void setpAlloc(int pAlloc) {
+        this.pAlloc = pAlloc;
+    }
+
+    public int getpMaxAlloc() {
+        return pMaxAlloc;
+    }
+
+    public void setpMaxAlloc(int pMaxAlloc) {
+        this.pMaxAlloc = pMaxAlloc;
+    }
+
+    public List<Integer> getPTBR() {
+        return PTBR;
+    }
+
+    public void setPTBR(List<Integer> PTBR) {
+        this.PTBR = PTBR;
     }
 
     public int[] getPgTable() {

@@ -1,10 +1,8 @@
 import java.io.*;
 import java.math.BigInteger;
 import java.text.DecimalFormat;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
+import java.util.function.ToDoubleBiFunction;
 
 public class processControl {
     //进程状态
@@ -42,6 +40,11 @@ public class processControl {
      *     构体，也可以用位数组
      */
     public static int[][] pageTable = new int[32][4];
+    //pageTable标记
+    public static int pt=0;
+
+    /*一个链表用于支持页面置换策略的队列。例如，如果是 FIFO，则采用先进先出队列。*/
+    public static List<LinkedList<Integer>> PERMUTATION = new ArrayList<>();
 
 
     /*1) 页内偏移的位数（例如：12 位）
@@ -72,6 +75,10 @@ public class processControl {
      */
     public static final double P_AVAILABLEPG = 0.85;
 
+    /**
+     * 果是 FIFO，则采用先进先出队列
+     */
+    public static final int MAX_ALLOC = 3;
     /**
      * 虚拟地址
      */
@@ -256,6 +263,10 @@ public class processControl {
             pcb.setpPC(0);
             int[] pgTable = {-1, 0, 0};
             pcb.setPgTable(pgTable);
+            pcb.setpMaxAlloc(MAX_ALLOC);
+            pcb.setpAlloc(0);
+            pcb.setHit(0);
+            pcb.setExecute(0);
             PCBS1.add(pcb);
             pcbs[i] = pcb;
 
@@ -389,6 +400,21 @@ public class processControl {
                         //虚拟地址
                         virtual=lines[1];
 
+                        //如果有效位=1 且存在位=1
+                        if(pageTable[pcb.getPTBR().get(pcb.getpAlloc())][2]==1){
+                            //执行次数加1
+                            pcb.setExecute(pcb.getExecute() + 1);
+                            //物理地址
+                            //输出：hit[虚拟地址，物理地址]，命中次数+1
+                            System.out.println("hit["+virtual+","+physical+"],命中次数+1");
+                            pcb.setHit(pcb.getHit()+1);
+
+                        }else {
+                            //判断进程是否达到分配的物理页帧最大数 max_alloc
+                            if (pcb.getpAlloc() < pcb.getpMaxAlloc()) {
+                                //执行次数加1
+                                pcb.setExecute(pcb.getExecute() + 1);
+
                         int[] ints = pcb.getpVirtAddr();
                         //如果虚拟地址在内存中，直接访问
                         if (ints[value2]!=-1){
@@ -414,7 +440,20 @@ public class processControl {
                                 }
                             }
                         }
+                                /*TODO:坐到这里了*/
+//                               输出miss, no-replace [访问的虚拟页#, 分配的物理页帧#]
+                                System.out.println("miss, no-replace ["+value2+", "+pageTable[pcb.getPTBR().get(pcb.getpAlloc())][0]+"]");
+                            } else {
+                                //执行次数加1
+                                pcb.setExecute(pcb.getExecute() + 1);
 
+                                List<Integer> ptbr = pcb.getPTBR();
+                                ptbr.remove(0);
+                                ptbr.add(pt);
+                                pcb.setPTBR(ptbr);
+
+                            }
+                        }
                     }
 
                     //执行指令
