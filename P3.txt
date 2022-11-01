@@ -1,4 +1,5 @@
-7 0 2 5 8 9 12 13
-io 88a
-io 88de
-cpu d62
+7 2 6 7 8 9 11 13
+cpu b065
+io 3f4b
+cpu d64e
+cpu 9a37

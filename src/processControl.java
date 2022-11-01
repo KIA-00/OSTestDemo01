@@ -182,7 +182,7 @@ public class processControl {
             //将页写入文件
 //            System.out.println("数组元素："+Arrays.toString(pages));
 
-            hit = new int[size][2];
+            hit = new int[k][2];
             //生成指令个数
             int n = (int) (Math.random() * (max - min + 1) + min);
             //生成指令
@@ -496,8 +496,12 @@ public class processControl {
                                 hit[pcb.getPid()][0] = hit[pcb.getPid()][0] + 1;
 
                                 List<Integer> ptbr = pcb.getPTBR();
-                                Integer remove = ptbr.remove(0);
-                                //物理页帧
+                                //随机置换
+                                int random = (int) (Math.random() * ptbr.size());
+//                                Integer remove = ptbr.remove(0);
+//                                //物理页帧
+//                                pageTable[pt][0] = pageTable[remove][0];
+                                Integer remove = ptbr.remove(random);
                                 pageTable[pt][0] = pageTable[remove][0];
                                 //将进程的每个有效页对应页表项的有效位设置为 1
                                 pageTable[pt][1] = 1;

@@ -1,5 +1,6 @@
-5 4 5 8 9 12
-cpu 9613
-cpu f5d3
-cpu cd73
-io 8fa9
+4 0 1 5 12
+cpu 5da4
+io c53c
+cpu 1b12
+io 2b7b
+io c7f0

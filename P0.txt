@@ -1,4 +1,5 @@
-4 0 7 8 14
-cpu 78a2
-io 7241
-cpu 82af
+6 2 5 7 8 13 15
+cpu e435
+io 76e0
+io f43b
+cpu 7ff1

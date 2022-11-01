@@ -1,5 +1,5 @@
-4 6 9 10 15
-io 6327
-io 7484
-io f0ed
-cpu af53
+7 0 1 2 5 7 9 12
+cpu 9fc5
+cpu 555a
+io c3ad
+io 117b
