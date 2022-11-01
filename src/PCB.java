@@ -15,7 +15,14 @@ public class PCB {
 
     private int[] pgTable;
 
+    /**
+     * 分配的物理页帧数
+     */
     private int pAlloc;
+
+    /**
+     * 分配的物理页帧最大数
+     */
     private int pMaxAlloc;
 
     /**
@@ -77,7 +84,9 @@ public class PCB {
 
     private int pWaitTime; // 等待时间
 
-    //虚拟地址对应的物理地址
+    /**
+     * 虚拟地址对应的物理地址
+     */
     private int[] pVirtAddr = new int[16];
 
     public PCB() {

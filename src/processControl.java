@@ -30,18 +30,18 @@ public class processControl {
 
     /**
      * 一个全局的位示图 bitmap（位数组），用于物理页帧的分配和回收。第 i
-     *         位为 0 表示第 i 个物理页帧空闲，为 1 则表示页帧被占用
+     * 位为 0 表示第 i 个物理页帧空闲，为 1 则表示页帧被占用
      */
     public static int[] bitmap = new int[32];
 
     /**
      * 一个页表/进程，用于支持每个进程的地址转换。页表项一定包括：物理
-     *     页帧号、有效位、存在位、(访问权限*)。关于页表项的表示，可以用结
-     *     构体，也可以用位数组
+     * 页帧号、有效位、存在位、(访问权限*)。关于页表项的表示，可以用结
+     * 构体，也可以用位数组
      */
     public static int[][] pageTable = new int[32][4];
     //pageTable标记
-    public static int pt=0;
+    public static int pt = 0;
 
     /*一个链表用于支持页面置换策略的队列。例如，如果是 FIFO，则采用先进先出队列。*/
     public static List<LinkedList<Integer>> PERMUTATION = new ArrayList<>();
@@ -87,6 +87,8 @@ public class processControl {
      * 物理地址
      */
     public static String physical;
+
+    public static int[][] hit;
 
 
     public static void main(String[] args) throws Exception {
@@ -180,6 +182,7 @@ public class processControl {
             //将页写入文件
 //            System.out.println("数组元素："+Arrays.toString(pages));
 
+            hit = new int[size][2];
             //生成指令个数
             int n = (int) (Math.random() * (max - min + 1) + min);
             //生成指令
@@ -226,6 +229,12 @@ public class processControl {
             // 关闭输出流,释放系统资源
             os.close();
         }
+
+        //初始化所有页表项（物理页帧#=-1, 有效位=0，存在位=0）
+        for (int i = 0; i < 32; i++) {
+            pageTable[i][0] = -1;
+        }
+
 //        随机生成位数组，生成 0 的概率为 P_AVAILABLEPG,输出位示图
         for (int i = 0; i < bitmap.length; i++) {
             if (Math.random() < P_AVAILABLEPG) {
@@ -291,19 +300,33 @@ public class processControl {
                 //执行进程
                 pcbs = ExecuteProcess(pcbs, k);
             } else if (!PCBS3.isEmpty()) {
-                printTable(k, pcbs);
+                pcbs = printTable(k, pcbs);
             }
             //判断是否所有进程都执行完毕
             if (PCBS4.size() == k) {
                 unDone = false;
             }
         }
-        printTable(k, pcbs);
+        pcbs = printTable(k, pcbs);
 
         //输出位视图
         System.out.println("位示图：" + Arrays.toString(bitmap));
 
+
         DecimalFormat df2 = new DecimalFormat("0.00");
+
+        //计算各个进程的命中率
+//        for (int i = 0; i < k; i++) {
+//            System.out.println("进程" + i + "的命中率为：" + df2.format((double) pcbs[i].getHit() / pcbs[i].getExecute()));
+//        }
+        for (int i = 0; i < k; i++) {
+            if (hit[i][0] == 0 || hit[i][1] == 0) {
+                System.out.println("进程" + i + "的命中率为：0.00");
+            } else {
+                System.out.println("进程" + i + "的命中率为：" + df2.format((double) hit[i][1] / hit[i][0]));
+            }
+//            System.out.println("进程" + i + "的命中率为：" + df2.format((double) hit[i][1] / hit[i][0]));
+        }
         System.err.println("所有进程执行完毕");
         System.err.println("程序运行" + time + "个时间片");
         System.err.println("CPU执行了" + cpuTime + "个时间片,占比：" + df2.format((double) cpuTime / time));
@@ -321,11 +344,11 @@ public class processControl {
             if (state == READY) {
                 System.out.print("READY\t\t\t");
             } else if (state == RUNCPU) {
-                System.out.print("RUN:CPU"+virtual+" "+physical);
+                System.out.print("RUN:CPU" + virtual + " " + physical);
                 cpuTime++;
                 cs++;
             } else if (state == RUNIO) {
-                System.out.print("RUN:IO "+virtual+" "+physical+"\t");
+                System.out.print("RUN:IO " + virtual + " " + physical + "\t");
                 cpuTime++;
                 pcbs[j].setpState(WAITING);
                 cs++;
@@ -380,7 +403,7 @@ public class processControl {
                     /**
                      * 有效位
                      */
-                    int value2= (int) (value/Math.pow(2,PAGE_OFFSET));
+                    int value2 = (int) (value / Math.pow(2, PAGE_OFFSET));
                     //判断value是否存在significantBit中
                     boolean isExist = false;
                     for (int j = 1; j < significantBit.length; j++) {
@@ -396,64 +419,102 @@ public class processControl {
                         pcb.setpState(DONE);
                         PCBS4.add(pcb);
                         break;
-                    }else{
+                    } else {
                         //虚拟地址
-                        virtual=lines[1];
+                        virtual = lines[1];
+                        int alloc = pcb.getpAlloc();
+                        List<Integer> pcbPTBR = pcb.getPTBR();
+                        int integer;
+                        if (pcbPTBR != null && pcbPTBR.size() > 0) {
+                            integer = pcbPTBR.get(alloc - 1);
+                        } else {
+                            integer = 0;
+                        }
+//                        pcb.getPTBR().get(pcb.getpAlloc())
 
                         //如果有效位=1 且存在位=1
-                        if(pageTable[pcb.getPTBR().get(pcb.getpAlloc())][2]==1){
+                        if (pageTable[integer][2] == 1) {
                             //执行次数加1
                             pcb.setExecute(pcb.getExecute() + 1);
+                            hit[pcb.getPid()][0] = hit[pcb.getPid()][0] + 1;
                             //物理地址
                             //输出：hit[虚拟地址，物理地址]，命中次数+1
-                            System.out.println("hit["+virtual+","+physical+"],命中次数+1");
-                            pcb.setHit(pcb.getHit()+1);
-
-                        }else {
+                            System.out.println("hit[" + virtual + "," + physical + "],命中次数+1");
+//                            pcb.setHit(pcb.getHit() + 1);
+                            hit[pcb.getPid()][1] = hit[pcb.getPid()][1] + 1;
+                        } else {
                             //判断进程是否达到分配的物理页帧最大数 max_alloc
                             if (pcb.getpAlloc() < pcb.getpMaxAlloc()) {
                                 //执行次数加1
                                 pcb.setExecute(pcb.getExecute() + 1);
+                                hit[pcb.getPid()][0]++;
 
-                        int[] ints = pcb.getpVirtAddr();
-                        //如果虚拟地址在内存中，直接访问
-                        if (ints[value2]!=-1){
-                            pageTable[pcb.getPid()][0]=ints[value2];
-                            if (value2==0){
-                                physical= Integer.toHexString(value%((int)Math.pow(2,PAGE_OFFSET))+ints[value2]*(int)Math.pow(2,PAGE_OFFSET));
-                            }else
-                                physical= Integer.toHexString(value%(value2*(int)Math.pow(2,PAGE_OFFSET))+ints[value2]*(int)Math.pow(2,PAGE_OFFSET));
-                        }
-                        else {
-                            //遍历位数组，找到对应的物理地址，将0置为1，返回位置下表，为物理页帧号
-                            for (int j = 0; j < bitmap.length; j++) {
-                                if (bitmap[j] == 0) {
-                                    bitmap[j] = 1;
-                                    ints[value2] = j;
-                                    pcb.setpVirtAddr(ints);
-                                    pageTable[pcb.getPid()][0] = j;
+                                int[] ints = pcb.getpVirtAddr();
+                                //如果虚拟地址在内存中，直接访问
+                                if (ints[value2] != -1) {
+//                                    pageTable[pcb.getPid()][0] = ints[value2];
+                                    pageTable[pt][0] = ints[value2];
+                                    //将进程的每个有效页对应页表项的有效位设置为 1
+                                    pageTable[pt][1] = 1;
+                                    pcb.getPTBR().add(pt);
                                     if (value2 == 0) {
-                                        physical = Integer.toHexString(value % ((int) Math.pow(2, PAGE_OFFSET)) + j * (int) Math.pow(2, PAGE_OFFSET));
+                                        physical = Integer.toHexString(value % ((int) Math.pow(2, PAGE_OFFSET)) + ints[value2] * (int) Math.pow(2, PAGE_OFFSET));
                                     } else
-                                        physical = Integer.toHexString(value % (value2 * (int) Math.pow(2, PAGE_OFFSET)) + j * (int) Math.pow(2, PAGE_OFFSET));
-                                    break;
+                                        physical = Integer.toHexString(value % (value2 * (int) Math.pow(2, PAGE_OFFSET)) + ints[value2] * (int) Math.pow(2, PAGE_OFFSET));
+                                    System.out.println("hit[" + virtual + "," + physical + "],命中次数+1");
+//                                    pcb.setHit(pcb.getHit() + 1);
+                                    hit[pcb.getPid()][1] = hit[pcb.getPid()][1] + 1;
+                                } else {
+                                    //遍历位数组，找到对应的物理地址，将0置为1，返回位置下表，为物理页帧号
+                                    for (int j = 0; j < bitmap.length; j++) {
+                                        if (bitmap[j] == 0) {
+                                            bitmap[j] = 1;
+                                            ints[value2] = j;
+                                            pcb.setpVirtAddr(ints);
+//                                            pageTable[pcb.getPid()][0] = j;
+                                            //物理页帧
+                                            pageTable[pt][0] = j;
+                                            //将进程的每个有效页对应页表项的有效位设置为 1
+                                            pageTable[pt][1] = 1;
+                                            pcb.getPTBR().add(pt);
+                                            pcb.setpAlloc(pcb.getpAlloc() + 1);
+                                            if (value2 == 0) {
+                                                physical = Integer.toHexString(value % ((int) Math.pow(2, PAGE_OFFSET)) + j * (int) Math.pow(2, PAGE_OFFSET));
+                                            } else
+                                                physical = Integer.toHexString(value % (value2 * (int) Math.pow(2, PAGE_OFFSET)) + j * (int) Math.pow(2, PAGE_OFFSET));
+                                            /*TODO:坐到这里了*/
+//                                          输出miss, no-replace [访问的虚拟页#, 分配的物理页帧#]
+                                            System.out.println("miss, no-replace [" + value2 + ", " + ints[value2] + "]");
+                                            break;
+                                        }
+                                    }
                                 }
-                            }
-                        }
-                                /*TODO:坐到这里了*/
-//                               输出miss, no-replace [访问的虚拟页#, 分配的物理页帧#]
-                                System.out.println("miss, no-replace ["+value2+", "+pageTable[pcb.getPTBR().get(pcb.getpAlloc())][0]+"]");
+
                             } else {
                                 //执行次数加1
                                 pcb.setExecute(pcb.getExecute() + 1);
+                                hit[pcb.getPid()][0] = hit[pcb.getPid()][0] + 1;
 
                                 List<Integer> ptbr = pcb.getPTBR();
-                                ptbr.remove(0);
+                                Integer remove = ptbr.remove(0);
+                                //物理页帧
+                                pageTable[pt][0] = pageTable[remove][0];
+                                //将进程的每个有效页对应页表项的有效位设置为 1
+                                pageTable[pt][1] = 1;
                                 ptbr.add(pt);
                                 pcb.setPTBR(ptbr);
 
+                                //输出：miss，replace [访问的虚拟页#,被置换出去的页(或页帧)#]
+                                System.out.println("miss, replace [" + value2 + ", " + pageTable[remove][0] + "]");
+
+                                if (value2 == 0) {
+                                    physical = Integer.toHexString(value % ((int) Math.pow(2, PAGE_OFFSET)) + pageTable[pt][0] * (int) Math.pow(2, PAGE_OFFSET));
+                                } else
+                                    physical = Integer.toHexString(value % (value2 * (int) Math.pow(2, PAGE_OFFSET)) + pageTable[pt][0] * (int) Math.pow(2, PAGE_OFFSET));
+
                             }
                         }
+                        pt++;
                     }
 
                     //执行指令
@@ -474,7 +535,7 @@ public class processControl {
                         pcb.setpPC(i);
                         //设置进程控制块
                         pcbs[pcb.getPid()] = pcb;
-                        printTable(k, pcbs);
+                        pcbs = printTable(k, pcbs);
                     }
                 }
                 i++;
@@ -492,10 +553,10 @@ public class processControl {
                 pcb.setpPC(FINISH);//结束
                 //设置进程控制块
                 pcbs[pcb.getPid()] = pcb;
-                printTable(k, pcbs);
+                pcbs = printTable(k, pcbs);
             } else {
                 pcbs[pcb.getPid()] = pcb;
-                printTable(k, pcbs);
+                pcbs = printTable(k, pcbs);
             }
         } catch (Exception e) {
             e.printStackTrace();

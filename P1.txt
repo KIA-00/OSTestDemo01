@@ -1,5 +1,5 @@
-3 0 8 12
-io ca1e
-io 8a99
-cpu 846c
-cpu c4c8
+4 6 9 10 15
+io 6327
+io 7484
+io f0ed
+cpu af53
